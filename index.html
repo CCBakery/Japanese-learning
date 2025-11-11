@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Again（OP）听歌学日语 · Romaji + 中文</title>
+<style>
+  :root { --bg:#0f1115; --card:#171a21; --muted:#9aa3af; --text:#e5e7eb; --brand:#60a5fa; }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
+  header{padding:12px 16px;border-bottom:1px solid #222;display:flex;gap:12px;align-items:center}
+  header h1{font-size:16px;margin:0;font-weight:600}
+  .wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;padding:12px;min-height:calc(100vh - 54px)}
+  .panel{background:var(--card);border:1px solid #222;border-radius:14px;padding:12px;overflow:auto}
+  .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  button,.chip{background:#1f2430;border:1px solid #2a2f3a;color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+  button:hover,.chip:hover{border-color:#3a4252}
+  .chip{font-size:12px}
+  #current{font-size:20px;font-weight:700;margin:6px 0}
+  #romaji{font-size:18px}
+  #cn{color:var(--muted)}
+  .seg{padding:8px;border-radius:10px;margin:6px 0;border:1px solid #232833;cursor:pointer}
+  .seg:hover{border-color:#374151}
+  .active{border-color:var(--brand);box-shadow:0 0 0 1px color-mix(in srgb, var(--brand) 50%, transparent)}
+  .small{font-size:12px;color:var(--muted)}
+  input[type="text"]{background:#0e1218;border:1px solid #263042;color:var(--text);padding:8px;border-radius:10px;width:180px}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Again（OP）听歌学日语 · Romaji + 中文</h1>
+    <span class="small">空格：播放/暂停 · ↑/↓：上一句/下一句 · T：切换翻译 · +/-：校准偏移</span>
+  </header>
+
+  <div class="wrap">
+    <!-- 左：本地视频（与 index.html 同目录） -->
+    <section class="panel">
+      <video id="player" controls style="aspect-ratio:16/9;width:100%;border-radius:8px;display:block">
+        <source src="videoplayback.mp4" type="video/mp4">
+        Your browser does not support HTML5 video.
+      </video>
+
+      <div class="row" style="margin-top:8px">
+        <button id="play">▶︎/⏸</button>
+        <button id="prev">↑ 上一句</button>
+        <button id="next">↓ 下一句</button>
+        <span class="chip">偏移 <span id="offsetLabel">0.00s</span></span>
+        <button id="minus">-0.10s</button>
+        <button id="plus">+0.10s</button>
+        <span class="chip" id="toggleCn">显示/隐藏中文</span>
+        <input id="jump" type="text" placeholder="跳到 00:45 或 45.0s"/>
+        <button id="go">Go</button>
+      </div>
+      <div class="small" style="margin-top:6px">
+        右侧列表可点击跳转；若不同步，用 +/- 微调偏移。
+      </div>
+    </section>
+
+    <!-- 右：当前句 + 列表 -->
+    <section class="panel">
+      <div class="small">当前句</div>
+      <div id="current"></div>
+      <div id="romaji"></div>
+      <div id="cn"></div>
+      <hr style="border:0;border-top:1px solid #232833;margin:10px 0">
+      <div class="small">句子列表（可点击跳转）</div>
+      <div id="list"></div>
+    </section>
+  </div>
+
+  <!-- 数据：按你的视频版本微调 start/end（秒） -->
+  <script>
+  const SEGMENTS = [
+    { id:"L1", start: 6.50, end: 10.00,
+      jp:"この想いを｜消してしまうには",
+      romaji:"kono omoi o｜keshite shimau ni wa",
+      zh:"要是想把这份思念抹去的话" },
+    { id:"L2", start:10.00, end: 13.20,
+      jp:"まだ人生｜長いでしょ",
+      romaji:"mada jinsei｜nagai desho",
+      zh:"人生还很长吧" }
+  ];
+  </script>
+
+  <!-- 逻辑（HTML5 video 版本） -->
+  <script>
+  const video = document.getElementById('player');
+  let curIndex = -1, showCn = true, offset = 0;
+
+  // UI
+  const $ = id => document.getElementById(id);
+  function syncOffset(){ $('offsetLabel').textContent = offset.toFixed(2)+'s'; }
+  function fmtTime(s){ const m=Math.floor(s/60), sec=(s%60).toFixed(2).padStart(5,'0'); return `${m}:${sec}`; }
+
+  function renderCurrent(){
+    const cur = SEGMENTS[curIndex];
+    $('current').textContent = cur ? cur.jp : '（未处于任何句子时间段）';
+    $('romaji').textContent = cur ? cur.romaji : '';
+    $('cn').textContent = cur ? (showCn ? cur.zh : '（中文已隐藏）') : '';
+  }
+  function highlight(i){
+    document.querySelectorAll('.seg').forEach(el=>el.classList.remove('active'));
+    if(i>=0){ const el = document.querySelector(`.seg[data-index="${i}"]`); if(el){ el.classList.add('active'); el.scrollIntoView({block:'nearest'}); } }
+  }
+  function buildList(){
+    const wrap = $('list'); wrap.innerHTML='';
+    SEGMENTS.forEach((s,i)=>{
+      const d = document.createElement('div');
+      d.className='seg'; d.dataset.index=i;
+      d.innerHTML = `<div><strong>${s.jp}</strong></div>
+                     <div>${s.romaji}</div>
+                     <div class="small">${fmtTime(s.start)} – ${fmtTime(s.end)} · ${s.zh}</div>`;
+      d.onclick = ()=> jumpTo(i);
+      wrap.appendChild(d);
+    });
+  }
+  function jumpTo(i){
+    const s = SEGMENTS[i]; if(!s) return;
+    video.currentTime = Math.max(0, s.start - offset);
+    video.play();
+  }
+
+  // 时间驱动：HTML5 video 的 timeupdate 事件
+  video.addEventListener('timeupdate', ()=>{
+    const t = video.currentTime + offset;
+    const i = SEGMENTS.findIndex(s => t>=s.start && t<s.end);
+    if(i !== curIndex){ curIndex = i; renderCurrent(); highlight(i); }
+  });
+
+  // 按钮与快捷键
+  $('play').onclick = ()=> video.paused ? video.play() : video.pause();
+  $('prev').onclick = ()=> jumpTo(Math.max(0, (curIndex>0 ? curIndex-1 : 0)));
+  $('next').onclick = ()=> jumpTo(Math.min(SEGMENTS.length-1, (curIndex>=0 ? curIndex+1 : 0)));
+  $('toggleCn').onclick = ()=> { showCn=!showCn; renderCurrent(); };
+  $('minus').onclick = ()=> { offset -= 0.10; syncOffset(); };
+  $('plus').onclick = ()=> { offset += 0.10; syncOffset(); };
+  $('go').onclick = ()=> {
+    const v = $('jump').value.trim(); if(!v) return;
+    let sec = 0;
+    if(/^\d+:\d+(\.\d+)?$/.test(v)){ const [m,s]=v.split(':'); sec = (+m)*60 + (+s); }
+    else sec = parseFloat(v);
+    if(!isNaN(sec)){ video.currentTime = Math.max(0, sec - offset); video.play(); }
+  };
+  document.addEventListener('keydown', e=>{
+    if(e.target.tagName==='INPUT') return;
+    if(e.code==='Space'){ e.preventDefault(); $('play').click(); }
+    if(e.key==='+'){ $('plus').click(); }
+    if(e.key==='-'){ $('minus').click(); }
+    if(e.key==='ArrowUp'){ $('prev').click(); }
+    if(e.key==='ArrowDown'){ $('next').click(); }
+    if(e.key.toLowerCase()==='t'){ $('toggleCn').click(); }
+  });
+
+  // 初始化
+  buildList(); syncOffset(); renderCurrent();
+  </script>
+</body>
+</html>
