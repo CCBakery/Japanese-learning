@@ -71,11 +71,11 @@
   <!-- 数据：按你的视频版本微调 start/end（秒） -->
   <script>
   const SEGMENTS = [
-    { id:"L1", start: 6.50, end: 10.00,
+    { id:"L1", start: 0.00, end: 3.00,
       jp:"この想いを｜消してしまうには",
       romaji:"kono omoi o｜keshite shimau ni wa",
       zh:"要是想把这份思念抹去的话" },
-    { id:"L2", start:10.00, end: 13.20,
+    { id:"L2", start:3.60, end: 6.00,
       jp:"まだ人生｜長いでしょ",
       romaji:"mada jinsei｜nagai desho",
       zh:"人生还很长吧" }
@@ -94,9 +94,9 @@
 
   function renderCurrent(){
     const cur = SEGMENTS[curIndex];
-    $('current').textContent = cur ? cur.jp : '（未处于任何句子时间段）';
-    $('romaji').textContent = cur ? cur.romaji : '';
-    $('cn').textContent = cur ? (showCn ? cur.zh : '（中文已隐藏）') : '';
+    $('current').textContent = cur ? cur.jp : '--';
+    $('romaji').textContent = '';
+    $('cn').textContent = '';
   }
   function highlight(i){
     document.querySelectorAll('.seg').forEach(el=>el.classList.remove('active'));
@@ -109,7 +109,7 @@
       d.className='seg'; d.dataset.index=i;
       d.innerHTML = `<div><strong>${s.jp}</strong></div>
                      <div>${s.romaji}</div>
-                     <div class="small">${fmtTime(s.start)} – ${fmtTime(s.end)} · ${s.zh}</div>`;
+                     <div class="small">${s.zh} · ${fmtTime(s.start)} – ${fmtTime(s.end)}</div>`;
       d.onclick = ()=> jumpTo(i);
       wrap.appendChild(d);
     });
