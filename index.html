@@ -24,6 +24,17 @@
   .small{font-size:12px;color:var(--muted)}
   input[type="text"]{background:#0e1218;border:1px solid #263042;color:var(--text);padding:8px;border-radius:10px;width:180px}
   @media (max-width:900px){.wrap{grid-template-columns:1fr}}
+  .word {
+  padding: 2px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.word-active {
+  background: rgba(96, 165, 250, 0.25);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.4);
+}
+
 </style>
 </head>
 <body>
@@ -71,103 +82,26 @@
   <!-- 数据：按你的视频版本微调 start/end（秒） -->
   <script>
   const SEGMENTS = [
-  { id:"L1", start: 0.00, end: 3.00,
-    jp:"この想いを｜消してしまうには",
-    romaji:"kono omoi wo keshite shimau niwa",
-    zh:"要是想把这份思念抹去的话"
+  {
+    id:"L1", start: 0.00, end: 3.00,
+    jpParts: ["この","想い","を","消し","て","しまう","に","は"],
+    romajiParts: ["kono","omoi","wo","keshi","te","shimau","ni","wa"],
+    zhParts:["这","思念","（宾语）","消","接续","掉","要","的话"],
+    zhSentence:"要消掉这份思念的话"
   },
-  { id:"L2", start: 3.00, end: 6.00,
-    jp:"まだ人生｜長いでしょ",
-    romaji:"mada jinsei nagai desho",
-    zh:"人生还很长吧"
+  {
+    id:"L2", start: 3.00, end: 7.00,
+    jpParts:["まだ","人生","長い","でしょ"],
+    romajiParts:["mada","jinsei","nagai","desho"],
+    zhParts:["还","人生","长","吧"],
+    zhSentence:"人生还很长吧"
   },
-  { id:"L3", start: 7.00, end: 9.00,
-    jp:"やり残してること｜やり直してみたいから",
-    romaji:"yarinokoshite'ru koto yarinaoshite mitai kara",
-    zh:"因为我想把那些没做完的事情重新再来一次"
-  },
-
-  { id:"L4", start: 9.00, end: 12.00,
-    jp:"夢の続き｜追いかけていたはずなのに",
-    romaji:"yume no tsuzuki oikakete ita hazu nano ni",
-    zh:"明明本该是在追逐梦想的续篇"
-  },
-  { id:"L5", start: 12.00, end: 15.00,
-    jp:"曲がりくねった｜細い道 人に躓く",
-    romaji:"magarikunetta hosoi michi hito ni tsumazuku",
-    zh:"却在曲折狭窄的小路上被别人绊倒"
-  },
-  { id:"L6", start: 15.00, end: 18.00,
-    jp:"あの頃みたいにって｜戻りたいわけじゃないの なくしてきた空を 探してる",
-    romaji:"ano koro mitai ni tte modoritai wakejanai no nakushite kita sora wo sagashite'ru",
-    zh:"说“像那时候一样”并不是想回到过去 只是在找回那片失去的天空"
-  },
-  { id:"L7", start: 18.00, end: 21.00,
-    jp:"分かってくれますように｜犠牲になったような 悲しい顔は やめてよ",
-    romaji:"wakatte kuremasu you ni gisei ni natta you na kanashii kao wa yamete yo",
-    zh:"希望你能明白 不要再露出那种好像自己成了牺牲品的表情"
-  },
-
-  { id:"L8", start: 21.00, end: 24.00,
-    jp:"罪の最後は涙じゃないよ",
-    romaji:"tsumi no saigo wa namida ja nai yo",
-    zh:"罪的结局并不只是用眼泪收场"
-  },
-  { id:"L9", start: 24.00, end: 27.00,
-    jp:"ずっと苦しく背負ってくんだ",
-    romaji:"zutto kurushiku seotte'ku n da",
-    zh:"而是要一直痛苦地背负下去"
-  },
-  { id:"L10", start: 27.00, end: 30.00,
-    jp:"出口見えない感情迷路に 誰を待ってるの",
-    romaji:"deguchi mienai kanjou meiro ni dare wo matte'ru no",
-    zh:"在看不到出口的感情迷宫里 我到底在等谁"
-  },
-  { id:"L11", start: 30.00, end: 33.00,
-    jp:"白いノートに綴ったように",
-    romaji:"shiroi nooto ni tsuzutta you ni",
-    zh:"多想像写在白色笔记本上一样"
-  },
-  { id:"L12", start: 33.00, end: 36.00,
-    jp:"もっと素直に吐き出したいよ",
-    romaji:"motto sunao ni hakidashitai yo",
-    zh:"把真正的心情坦率地全部吐露出来"
-  },
-  { id:"L13", start: 36.00, end: 39.00,
-    jp:"何から 逃れたいんだ",
-    romaji:"nani kara nogaretai n da",
-    zh:"我到底是想逃离什么呢"
-  },
-  { id:"L14", start: 39.00, end: 42.00,
-    jp:"現実ってやつか",
-    romaji:"genjitsu tte yatsu ka",
-    zh:"是那个所谓的“现实”吗"
-  },
-
-  { id:"L15", start: 42.00, end: 45.00,
-    jp:"叶える為に生きてるんだって 叫びたくなるよ 聞こえていますか",
-    romaji:"kanaeru tame ni ikite'ru n datte sakebitaku naru yo kikoete imasu ka",
-    zh:"想大声喊出“我就是为了实现愿望而活着的” 你听得见吗"
-  },
-  { id:"L16", start: 45.00, end: 48.00,
-    jp:"無難になんてやってられないから",
-    romaji:"bunan ni nante yatte'rarenai kara",
-    zh:"因为已经没法再走那种安全保守的路了"
-  },
-  { id:"L17", start: 48.00, end: 51.00,
-    jp:"帰る場所もないの",
-    romaji:"kaeru basho mo nai no",
-    zh:"也已经没有可以回去的地方"
-  },
-  { id:"L18", start: 51.00, end: 54.00,
-    jp:"優しさにはいつも感謝してる だから強くなりたい",
-    romaji:"yasashisa niwa itsumo kansha shite'ru dakara tsuyoku naritai",
-    zh:"一直对周围的温柔心存感激 正因为这样才想变得更坚强"
-  },
-  { id:"L19", start: 54.00, end: 57.00,
-    jp:"懐かしくなる こんな痛みも歓迎じゃん",
-    romaji:"natsukashiku naru konna itami mo kangei jan",
-    zh:"连这种会让人怀念的痛苦 也当成值得欢迎的东西"
+  {
+    id:"L3", start: 7.00, end: 12.00,
+    jpParts:["やり","残し","て","る","こと","やり","直し","て","み","たい","から"],
+    romajiParts:["yari","nokoshi","te","ru","koto","yari","naoshi","te","mi","tai","kara"],
+    zhParts:["做","没完成","接续","着","的事情","做","重新","接续","试试","想要","因为"],
+    zhSentence:"因为有没完成、想重新做做看的事情"
   }
 ];
 
@@ -183,28 +117,109 @@
   function syncOffset(){ $('offsetLabel').textContent = offset.toFixed(2)+'s'; }
   function fmtTime(s){ const m=Math.floor(s/60), sec=(s%60).toFixed(2).padStart(5,'0'); return `${m}:${sec}`; }
 
-  function renderCurrent(){
-    const cur = SEGMENTS[curIndex];
-    $('current').textContent = cur ? cur.jp : '--';
+  function makeWordLine(parts, clsPrefix) {
+  if (!parts) return '';
+  return parts
+    .map((w, i) =>
+      `<span class="word ${clsPrefix}-word" data-word="${i}">${w}</span>`
+    )
+    .join(' ');
+}
+
+function renderCurrent(){
+  const cur = SEGMENTS[curIndex];
+  if (!cur) {
+    $('current').textContent = '--';
     $('romaji').textContent = '';
     $('cn').textContent = '';
+    return;
   }
+
+  // 逐词渲染
+  $('current').innerHTML = makeWordLine(cur.jpParts, 'jp');
+  $('romaji').innerHTML = makeWordLine(cur.romajiParts, 'romaji');
+
+  // 中文：如果你想显示整句，就用 cur.zhSentence
+  // 如果你想显示逐词，就用 makeWordLine(cur.zhParts)
+  $('cn').innerHTML = showCn
+    ? makeWordLine(cur.zhParts, 'zh')
+    : '';
+
+  clearWordHighlight();
+}
+let activeWordIndex = null;
+
+function clearWordHighlight() {
+  document
+    .querySelectorAll('.word-active')
+    .forEach(el => el.classList.remove('word-active'));
+  activeWordIndex = null;
+}
+
+function highlightWord(idx) {
+  clearWordHighlight();
+  if (idx == null) return;
+  activeWordIndex = idx;
+
+  document
+    .querySelectorAll(`.word[data-word="${idx}"]`)
+    .forEach(el => el.classList.add('word-active'));
+}
+
+['current','romaji','cn'].forEach(id => {
+  const box = $(id);
+
+  box.addEventListener('mouseover', e => {
+    const span = e.target.closest('.word');
+    if (!span) return;
+    const idx = span.dataset.word;
+    highlightWord(idx);
+  });
+
+  box.addEventListener('mouseleave', () => {
+    if (activeWordIndex == null) clearWordHighlight();
+  });
+
+  box.addEventListener('click', e => {
+    const span = e.target.closest('.word');
+    if (!span) return;
+    const idx = span.dataset.word;
+    if (activeWordIndex === idx) {
+      clearWordHighlight();
+    } else {
+      highlightWord(idx);
+    }
+  });
+});
+
   function highlight(i){
     document.querySelectorAll('.seg').forEach(el=>el.classList.remove('active'));
     if(i>=0){ const el = document.querySelector(`.seg[data-index="${i}"]`); if(el){ el.classList.add('active'); el.scrollIntoView({block:'nearest'}); } }
   }
   function buildList(){
-    const wrap = $('list'); wrap.innerHTML='';
-    SEGMENTS.forEach((s,i)=>{
-      const d = document.createElement('div');
-      d.className='seg'; d.dataset.index=i;
-      d.innerHTML = `<div><strong>${s.jp}</strong></div>
-                     <div>${s.romaji}</div>
-                     <div class="small">${s.zh} · ${fmtTime(s.start)} – ${fmtTime(s.end)}</div>`;
-      d.onclick = ()=> jumpTo(i);
-      wrap.appendChild(d);
-    });
-  }
+  const wrap = $('list'); 
+  wrap.innerHTML = '';
+
+  SEGMENTS.forEach((s,i)=>{
+    const d = document.createElement('div');
+    d.className = 'seg';
+    d.dataset.index = i;
+
+    const jpLine  = s.jpParts.join('');      // 或者 '｜' 看你喜好
+    const romLine = s.romajiParts.join(' ');
+    const zhLine  = s.zhSentence || s.zhParts.join('');
+
+    d.innerHTML = `
+      <div><strong>${jpLine}</strong></div>
+      <div>${romLine}</div>
+      <div class="small">${zhLine} · ${fmtTime(s.start)} – ${fmtTime(s.end)}</div>
+    `;
+
+    d.onclick = () => jumpTo(i);
+    wrap.appendChild(d);
+  });
+}
+
   function jumpTo(i){
     const s = SEGMENTS[i]; if(!s) return;
     video.currentTime = Math.max(0, s.start - offset);
