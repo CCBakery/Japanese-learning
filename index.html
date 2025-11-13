@@ -73,8 +73,11 @@
       <div id="current"></div>
       <div id="romaji"></div>
       <div id="cn"></div>
-      <hr style="border:0;border-top:1px solid #232833;margin:10px 0">
-      <div class="small">句子列表（可点击跳转）</div>
+      <div class="row" style="margin-top:8px">
+        <button id="toggleGrammar" class="chip">展开句式解释</button>
+      </div>
+      <div id="grammar" class="small" style="margin-top:4px; display:none"></div>      <hr style="border:0;border-top:1px solid #232833;margin:10px 0">
+            <div class="small">句子列表（可点击跳转）</div>
       <div id="list"></div>
     </section>
   </div>
@@ -87,23 +90,27 @@
     jpParts: ["この","想い","を","消し","て","しまう","に","は"],
     romajiParts: ["kono","omoi","wo","keshi","te","shimau","ni","wa"],
     zhParts:["这","思念","（宾语）","消","接续","掉","要","的话"],
-    zhSentence:"要消掉这份思念的话"
+    zhSentence:"要消掉这份思念的话",
+    grammar: "この想い＝「这份思念」；を 标记宾语。\n消してしまう＝「消掉、结束掉」，「てしまう」表示动作彻底完成，常带一点“可惜/无奈”的语气。\n〜には＝「要…的话、为了…」，前面的「この想いを消してしまう」整体作为条件/目的。"
   },
   {
-    id:"L2", start: 3.00, end: 7.00,
+    id:"L2", start: 3.00, end: 6.00,
     jpParts:["まだ","人生","長い","でしょ"],
     romajiParts:["mada","jinsei","nagai","desho"],
     zhParts:["还","人生","长","吧"],
-    zhSentence:"人生还很长吧"
+    zhSentence:"人生还很长吧",
+    grammar: "まだ＝「还、仍然」，暗示后面还有很多时间。\n人生が長い＝人生很长。「長いでしょ」用「でしょ」软化语气，带一点“你也这么觉得吧”的确认感。"
   },
   {
     id:"L3", start: 7.00, end: 12.00,
     jpParts:["やり","残し","て","る","こと","やり","直し","て","み","たい","から"],
     romajiParts:["yari","nokoshi","te","ru","koto","yari","naoshi","te","mi","tai","kara"],
     zhParts:["做","没完成","接续","着","的事情","做","重新","接续","试试","想要","因为"],
-    zhSentence:"因为有没完成、想重新做做看的事情"
+    zhSentence:"因为有没完成、想重新做做看的事情",
+    grammar: "やり残す＝「没有做完、留下没做的事」。\nやり残してること＝「还没做完的那些事」，用「〜ている」表示状态，并用「こと」名词化成“一些事情”。\nやり直してみたい＝「想要再做一次试试」，「直す」有“重新”的意思，「〜てみたい」是「想试着做…」。\n〜から＝表示原因，「因为…所以…」。整句意思：因为还有很多没完成、想再试试的事情。"
   }
 ];
+
 
   </script>
 
@@ -111,6 +118,8 @@
   <script>
   const video = document.getElementById('player');
   let curIndex = -1, showCn = true, offset = 0;
+  let grammarVisible = false;
+
 
   // UI
   const $ = id => document.getElementById(id);
@@ -125,28 +134,38 @@
     )
     .join(' ');
 }
-
+function renderGrammar(cur) {
+  const box = $('grammar');
+  if (!box) return;
+  if (!cur || !cur.grammar) {
+    box.innerHTML = '';
+    return;
+  }
+  // 支持换行
+  box.innerHTML = cur.grammar.replace(/\n/g, '<br>');
+}
 function renderCurrent(){
   const cur = SEGMENTS[curIndex];
   if (!cur) {
     $('current').textContent = '--';
     $('romaji').textContent = '';
     $('cn').textContent = '';
+    renderGrammar(null);
+    updateSelectedWordDisplay();
     return;
   }
 
-  // 逐词渲染
+  // 逐词渲染日文、罗马音、中文
   $('current').innerHTML = makeWordLine(cur.jpParts, 'jp');
   $('romaji').innerHTML = makeWordLine(cur.romajiParts, 'romaji');
-
-  // 中文：如果你想显示整句，就用 cur.zhSentence
-  // 如果你想显示逐词，就用 makeWordLine(cur.zhParts)
   $('cn').innerHTML = showCn
     ? makeWordLine(cur.zhParts, 'zh')
     : '';
 
-  clearWordHighlight();
+  renderGrammar(cur);
+  updateSelectedWordDisplay();
 }
+
 let activeWordIndex = null;
 
 function clearWordHighlight() {
@@ -233,6 +252,19 @@ function highlightWord(idx) {
     if(i !== curIndex){ curIndex = i; renderCurrent(); highlight(i); }
   });
 
+  // 句式解释展开/收起
+const grammarBox = $('grammar');
+const toggleGrammarBtn = $('toggleGrammar');
+
+if (toggleGrammarBtn && grammarBox) {
+  toggleGrammarBtn.onclick = () => {
+    grammarVisible = !grammarVisible;
+    grammarBox.style.display = grammarVisible ? 'block' : 'none';
+    toggleGrammarBtn.textContent = grammarVisible ? '收起句式解释' : '展开句式解释';
+  };
+}
+
+
   // 按钮与快捷键
   $('play').onclick = ()=> video.paused ? video.play() : video.pause();
   $('prev').onclick = ()=> jumpTo(Math.max(0, (curIndex>0 ? curIndex-1 : 0)));
@@ -256,6 +288,7 @@ function highlightWord(idx) {
     if(e.key==='ArrowDown'){ $('next').click(); }
     if(e.key.toLowerCase()==='t'){ $('toggleCn').click(); }
   });
+  
 
   // 初始化
   buildList(); syncOffset(); renderCurrent();
