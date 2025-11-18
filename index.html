@@ -63,14 +63,6 @@
     box-shadow:0 0 0 1px color-mix(in srgb, var(--brand) 50%, transparent);
   }
   .small{font-size:12px;color:var(--muted)}
-  input[type="text"]{
-    background:#0e1218;
-    border:1px solid #263042;
-    color:var(--text);
-    padding:8px;
-    border-radius:10px;
-    width:180px;
-  }
   @media (max-width:900px){
     .wrap{grid-template-columns:1fr}
   }
@@ -100,12 +92,13 @@
     margin-top:4px;
     padding-right:4px;
   }
+  .seg > div { display: block; }
 </style>
 </head>
 <body>
   <header>
     <h1>Again（OP）听歌学日语 · Romaji + 中文</h1>
-    <span class="small">空格：播放/暂停 · ↑/↓：上一句/下一句 · T：切换翻译</span>
+    <span class="small">空格：播放/暂停 · ↑/↓：上一句/下一句</span>
   </header>
 
   <div class="wrap">
@@ -120,9 +113,6 @@
         <button id="play">▶︎/⏸</button>
         <button id="prev">↑ 上一句</button>
         <button id="next">↓ 下一句</button>
-        <span class="chip" id="toggleCn">显示/隐藏中文</span>
-        <input id="jump" type="text" placeholder="跳到 00:45 或 45.0s"/>
-        <button id="go">Go</button>
       </div>
       <div class="small" style="margin-top:6px">
         右侧列表可点击跳转。
@@ -183,8 +173,9 @@
   <script type="module">
     import { SEGMENTS } from "./segments.js";
     window.SEGMENTS = SEGMENTS;
+
     const video = document.getElementById('player');
-    let curIndex = -1, showCn = true;
+    let curIndex = -1;
     let grammarVisible = false;
     let showRomaji = true;
 
@@ -228,9 +219,8 @@
       $('romaji').innerHTML = showRomaji
         ? makeWordLine(cur.romajiParts, 'romaji')
         : '';
-      $('cn').innerHTML = showCn
-        ? makeWordLine(cur.zhParts, 'zh')
-        : '';
+      // 中文始终显示（已移除“显示/隐藏中文”功能）
+      $('cn').innerHTML = makeWordLine(cur.zhParts, 'zh');
 
       renderGrammar(cur);
     }
@@ -337,7 +327,6 @@
 
       video.pause();
       video.currentTime = s.start;
-
       setTimeout(() => video.play(), 50);
     }
 
@@ -366,28 +355,8 @@
     $('play').onclick = ()=> video.paused ? video.play() : video.pause();
     $('prev').onclick = ()=> jumpTo(Math.max(0, (curIndex>0 ? curIndex-1 : 0)));
     $('next').onclick = ()=> jumpTo(Math.min(SEGMENTS.length-1, (curIndex>=0 ? curIndex+1 : 0)));
-    $('toggleCn').onclick = ()=> { showCn=!showCn; renderCurrent(); };
 
-    $('go').onclick = ()=> {
-      const v = $('jump').value.trim();
-      if(!v) return;
-
-      let sec = 0;
-
-      if(/^\d+:\d+(\.\d+)?$/.test(v)){
-        const [m, s] = v.split(':');
-        sec = (+m)*60 + (+s);
-      } else {
-        sec = parseFloat(v);
-      }
-
-      if(!isNaN(sec)){
-        video.pause();
-        video.currentTime = sec;
-        setTimeout(() => video.play(), 50);
-      }
-    };
-
+    // 切换罗马音
     $('toggleRomaji').onclick = () => {
       showRomaji = !showRomaji;
       $('toggleRomaji').textContent = showRomaji ? '隐藏罗马音' : '显示罗马音';
@@ -395,15 +364,14 @@
       buildList();
     };
 
+    // 键盘：仅保留 空格 / ↑ / ↓
     document.addEventListener('keydown', e=>{
-      if(e.target.tagName==='INPUT') return;
       if(e.code==='Space'){
         e.preventDefault();
         $('play').click();
       }
       if(e.key==='ArrowUp'){ $('prev').click(); }
       if(e.key==='ArrowDown'){ $('next').click(); }
-      if(e.key.toLowerCase()==='t'){ $('toggleCn').click(); }
     });
 
     // 初始化
