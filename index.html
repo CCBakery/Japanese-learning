@@ -6,41 +6,106 @@
 <title>Again（OP）听歌学日语 · Romaji + 中文</title>
 <style>
   :root { --bg:#0f1115; --card:#171a21; --muted:#9aa3af; --text:#e5e7eb; --brand:#60a5fa; }
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
-  header{padding:12px 16px;border-bottom:1px solid #222;display:flex;gap:12px;align-items:center}
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto;
+  }
+  header{
+    padding:12px 16px;
+    border-bottom:1px solid #222;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
   header h1{font-size:16px;margin:0;font-weight:600}
-  .wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;padding:12px;min-height:calc(100vh - 54px)}
-  .panel{background:var(--card);border:1px solid #222;border-radius:14px;padding:12px;overflow:auto}
+  .wrap{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:12px;
+    padding:12px;
+    min-height:calc(100vh - 54px);
+  }
+  .panel{
+    background:var(--card);
+    border:1px solid #222;
+    border-radius:14px;
+    padding:12px;
+    overflow:auto;
+  }
   .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  button,.chip{background:#1f2430;border:1px solid #2a2f3a;color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+  button,.chip{
+    background:#1f2430;
+    border:1px solid #2a2f3a;
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:10px;
+    cursor:pointer;
+  }
   button:hover,.chip:hover{border-color:#3a4252}
   .chip{font-size:12px}
   #current{font-size:20px;font-weight:700;margin:6px 0}
   #romaji{font-size:18px}
   #cn{color:var(--muted)}
-  .seg{padding:8px;border-radius:10px;margin:6px 0;border:1px solid #232833;cursor:pointer}
+  .seg{
+    padding:8px;
+    border-radius:10px;
+    margin:6px 0;
+    border:1px solid #232833;
+    cursor:pointer;
+  }
   .seg:hover{border-color:#374151}
-  .active{border-color:var(--brand);box-shadow:0 0 0 1px color-mix(in srgb, var(--brand) 50%, transparent)}
+  .active{
+    border-color:var(--brand);
+    box-shadow:0 0 0 1px color-mix(in srgb, var(--brand) 50%, transparent);
+  }
   .small{font-size:12px;color:var(--muted)}
-  input[type="text"]{background:#0e1218;border:1px solid #263042;color:var(--text);padding:8px;border-radius:10px;width:180px}
-  @media (max-width:900px){.wrap{grid-template-columns:1fr}}
-  .word {
-  padding: 2px 4px;
-  border-radius: 6px;
-  cursor: pointer;
-}
+  input[type="text"]{
+    background:#0e1218;
+    border:1px solid #263042;
+    color:var(--text);
+    padding:8px;
+    border-radius:10px;
+    width:180px;
+  }
+  @media (max-width:900px){
+    .wrap{grid-template-columns:1fr}
+  }
+  .word{
+    padding:2px 4px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .word-active{
+    background:rgba(96, 165, 250, 0.25);
+    box-shadow:0 0 0 1px rgba(96, 165, 250, 0.4);
+  }
 
-.word-active {
-  background: rgba(96, 165, 250, 0.25);
-  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.4);
-}
-
+  /* 右侧歌词 panel：上半部分固定，下半部分列表滚动 */
+  .panel-lyrics{
+    display:flex;
+    flex-direction:column;
+    max-height:calc(100vh - 80px);
+    overflow:hidden;
+  }
+  .panel-lyrics > *:not(#list){
+    flex-shrink:0;
+  }
+  #list{
+    flex:1;
+    overflow-y:auto;
+    margin-top:4px;
+    padding-right:4px;
+  }
 </style>
 </head>
 <body>
   <header>
     <h1>Again（OP）听歌学日语 · Romaji + 中文</h1>
-    <span class="small">空格：播放/暂停 · ↑/↓：上一句/下一句 · T：切换翻译 · +/-：校准偏移</span>
+    <span class="small">空格：播放/暂停 · ↑/↓：上一句/下一句 · T：切换翻译</span>
   </header>
 
   <div class="wrap">
@@ -55,423 +120,295 @@
         <button id="play">▶︎/⏸</button>
         <button id="prev">↑ 上一句</button>
         <button id="next">↓ 下一句</button>
-        <span class="chip">偏移 <span id="offsetLabel">0.00s</span></span>
-        <button id="minus">-0.10s</button>
-        <button id="plus">+0.10s</button>
         <span class="chip" id="toggleCn">显示/隐藏中文</span>
         <input id="jump" type="text" placeholder="跳到 00:45 或 45.0s"/>
         <button id="go">Go</button>
       </div>
       <div class="small" style="margin-top:6px">
-        右侧列表可点击跳转；若不同步，用 +/- 微调偏移。
+        右侧列表可点击跳转。
       </div>
     </section>
 
     <!-- 右：当前句 + 列表 -->
-    <section class="panel">
+    <section class="panel panel-lyrics">
       <div class="small">当前句</div>
       <div id="current"></div>
       <div id="romaji"></div>
       <div id="cn"></div>
       <div class="row" style="margin-top:8px">
         <button id="toggleGrammar" class="chip">展开句式解释</button>
+        <button id="toggleRomaji" class="chip">隐藏罗马音</button>
       </div>
-      <div id="grammar" class="small" style="margin-top:4px; display:none"></div>      <hr style="border:0;border-top:1px solid #232833;margin:10px 0">
-            <div class="small">句子列表（可点击跳转）</div>
+      <div id="grammar" class="small" style="margin-top:4px; display:none"></div>
+      <hr style="border:0;border-top:1px solid #232833;margin:10px 0">
+      <div class="small">句子列表（可点击跳转）</div>
       <div id="list"></div>
     </section>
   </div>
 
-  <!-- 数据：按你的视频版本微调 start/end（秒） -->
   <script>
-  const SEGMENTS = [
-  {
-    id:"L1", start: 0.00, end: 3.00,
-    jpParts: ["この","想い","を","消し","て","しまう","に","は"],
-    romajiParts: ["kono","omoi","wo","keshi","te","shimau","ni","wa"],
-    zhParts:["这","思念","（宾语）","消","接续","掉","要","的话"],
-    zhSentence:"要消掉这份思念的话",
-    grammar: "この想い＝「这份思念」；を 标记宾语。\n消してしまう＝「消掉、结束掉」，「てしまう」表示动作彻底完成，常带一点“可惜/无奈”的语气。\n〜には＝「要…的话、为了…」，前面的「この想いを消してしまう」整体作为条件/目的。"
-  },
-  {
-    id:"L2", start: 3.00, end: 6.00,
-    jpParts:["まだ","人生","長い","でしょ"],
-    romajiParts:["mada","jinsei","nagai","desho"],
-    zhParts:["还","人生","长","吧"],
-    zhSentence:"人生还很长吧",
-    grammar: "まだ＝「还、仍然」，暗示后面还有很多时间。\n人生が長い＝人生很长。「長いでしょ」用「でしょ」软化语气，带一点“你也这么觉得吧”的确认感。"
-  },
-  {
-    id:"L3", start: 7.00, end: 12.00,
-    jpParts:["やり","残し","て","る","こと","やり","直し","て","み","たい","から"],
-    romajiParts:["yari","nokoshi","te","ru","koto","yari","naoshi","te","mi","tai","kara"],
-    zhParts:["做","没完成","接续","着","的事情","做","重新","接续","试试","想要","因为"],
-    zhSentence:"因为有没完成、想重新做做看的事情",
-    grammar: "やり残す＝「没有做完、留下没做的事」。\nやり残してること＝「还没做完的那些事」，用「〜ている」表示状态，并用「こと」名词化成“一些事情”。\nやり直してみたい＝「想要再做一次试试」，「直す」有“重新”的意思，「〜てみたい」是「想试着做…」。\n〜から＝表示原因，「因为…所以…」。整句意思：因为还有很多没完成、想再试试的事情。"
-  },
-  {
-    id:"L4", start: 26.00, end: 34.00,
-    jpParts:["夢","の","続き","追い","かけ","て","い","た","はず","な","の","に"],
-    romajiParts:["yume","no","tsuzuki","oi","kake","te","i","ta","hazu","na","no","ni"],
-    zhParts:["梦","的","续篇","追","上","接续","着","过去","本该","（判断）","的","却"],
-    zhSentence:"明明本该是在追逐梦想的续篇",
-    grammar:
-      "夢の続き：梦的继续，比喻“梦想的后续、下一章节”。\n" +
-      "追いかけていた：追いかける（追逐）＋ている 的过去式，表示过去一直在追。\n" +
-      "〜はず：按理说应该是…（说话者的主观判断）。\n" +
-      "〜なのに：表示转折和失落，“明明应该…却…”。"
-  },
-  {
-    id:"L5", start: 34.00, end: 38.00,
-    jpParts:["曲がり","くねっ","た","細い","道","人","に","躓く"],
-    romajiParts:["magari","kunet","ta","hosoi","michi","hito","ni","tsumazuku"],
-    zhParts:["弯弯","曲折","的","细窄","小路","被人","在","绊倒"],
-    zhSentence:"却在曲折狭窄的小路上被别人绊倒",
-    grammar:
-      "曲がりくねった細い道：曲がる（弯）＋くねる（蜿蜒）→曲がりくねった（弯弯曲曲的）＋細い道（细窄的路）。\n" +
-      "人に躓く：躓く（绊倒、受挫），“在人际关系/别人那里绊倒”的比喻。"
-  },
-  {
-    id:"L6", start: 38.00, end: 42.00,
-    jpParts:["あの","頃","みたい","に","って","戻り","たい","わけ","じゃ","ない","の","なくし","て","きた","空","を","探し","て","る"],
-    romajiParts:["ano","koro","mitai","ni","tte","modori","tai","wake","ja","nai","no","nakushi","te","kita","sora","wo","sagashi","te","ru"],
-    zhParts:["那","时候","一样","地","这样说","回去","想","并不是那种","并","不是","的","弄丢","接续","过来","天空","（宾语）","寻找","接续","着"],
-    zhSentence:"说“像那时候一样”并不是想回到过去 只是在找回那片失去的天空",
-    grammar:
-      "あの頃みたいに：像那时候那样。\n" +
-      "〜って：口语引用标记，“说/想着…”。\n" +
-      "戻りたいわけじゃない：直译“并不是说想回去”，「〜わけじゃない」＝并非那样。\n" +
-      "なくしてきた空：なくす（失去）＋てくる→到现在为止逐渐失去的“天空”（象征自由、希望）。\n" +
-      "探してる：探す＋ている，“正在寻找”。"
-  },
-  {
-    id:"L7", start: 42.00, end: 48.00,
-    jpParts:["分かっ","て","くれます","よう","に","犠牲","に","なっ","た","よう","な","悲しい","顔","は","やめ","て","よ"],
-    romajiParts:["wakat","te","kuremasu","you","ni","gisei","ni","nat","ta","you","na","kanashii","kao","wa","yame","te","yo"],
-    zhParts:["理解","接续","给我吧","希望","地","牺牲","成为","变","了","一样","的","悲伤","脸","的话题","停下","接续","啦"],
-    zhSentence:"希望你能明白 不要再露出那种好像自己成了牺牲品的表情",
-    grammar:
-      "分かってくれますように：分かってくれる（能理解我）＋ように（祈愿），“希望你能明白”。\n" +
-      "犠牲になったような悲しい顔：像成了牺牲品那样的悲伤表情。\n" +
-      "〜はやめてよ：字面“请把…给停了吧”，＝“别再那样了”。"
-  },
+    // ====== 日语朗读工具 ======
+    let jaVoice = null;
 
-  {
-    id:"L8", start: 48.00, end: 50.00,
-    jpParts:["罪","の","最後","は","涙","じゃ","ない","よ"],
-    romajiParts:["tsumi","no","saigo","wa","namida","ja","nai","yo"],
-    zhParts:["罪","的","终点","则","眼泪","才","不是","哦"],
-    zhSentence:"罪的结局并不只是用眼泪收场",
-    grammar:
-      "罪の最後：罪（过错、罪孽）的最后、结局。\n" +
-      "〜は涙じゃない：不是用眼泪（哭一场）就结束那种东西，否定“哭一哭就完事”。"
-  },
-  {
-    id:"L9", start: 50.00, end: 52.00,
-    jpParts:["ずっと","苦しく","背負っ","て","く","ん","だ"],
-    romajiParts:["zutto","kurushiku","seott","te","ku","n","da"],
-    zhParts:["一直","痛苦地","背负","接续","下去","的","啊"],
-    zhSentence:"而是要一直痛苦地背负下去",
-    grammar:
-      "ずっと：始终、一直。\n" +
-      "苦しく：苦しい 的副词形，“痛苦地…”。\n" +
-      "背負ってくんだ：背負っていく→背着继续往前走，「〜んだ」带解释、强调语气。"
-  },
-  {
-    id:"L10", start: 52.00, end: 54.00,
-    jpParts:["出口","見え","ない","感情","迷路","に","誰","を","待っ","て","る","の"],
-    romajiParts:["deguchi","mie","nai","kanjou","meiro","ni","dare","wo","matt","te","ru","no"],
-    zhParts:["出口","看见","不","感情","迷宫","里","谁","（宾语）","等","接续","着","呢"],
-    zhSentence:"在看不到出口的感情迷宫里 我到底在等谁",
-    grammar:
-      "出口見えない感情迷路：出口が見えない（看不到出口的）＋感情の迷路，比喻纠结复杂的情绪状态。\n" +
-      "〜に：表示所在、范围，“在…里”。\n" +
-      "誰を待ってるの：待っている（正在等）＋の？→带自问意味的疑问。"
-  },
-  {
-    id:"L11", start: 54.00, end: 59.00,
-    jpParts:["白い","ノート","に","綴っ","た","よう","に"],
-    romajiParts:["shiroi","nooto","ni","tsuzut","ta","you","ni"],
-    zhParts:["白色的","笔记本","上","记录","了","那样","地"],
-    zhSentence:"多想像写在白色笔记本上一样",
-    grammar:
-      "白いノート：白色的笔记本。\n" +
-      "〜に綴った：綴る（誊写、写下），“写在…上”。\n" +
-      "〜ように：像…那样，作比喻，引出下一句“想更坦率地吐露出来”。"
-  },
-  {
-    id:"L12", start: 59.00, end: 61.00,
-    jpParts:["もっと","素直","に","吐き","出し","たい","よ"],
-    romajiParts:["motto","sunao","ni","haki","dashi","tai","yo"],
-    zhParts:["更","坦率","地","吐","出","想要","啊"],
-    zhSentence:"把真正的心情坦率地全部吐露出来",
-    grammar:
-      "もっと：更、再多一点。\n" +
-      "素直に：坦率地、老实地。\n" +
-      "吐き出したい：吐き出す（吐出、倾吐）＋たい，“想全部说出来”。"
-  },
-  {
-    id:"L13", start: 61.00, end: 67.00,
-    jpParts:["何","から","逃れ","たい","ん","だ"],
-    romajiParts:["nani","kara","nogare","tai","n","da"],
-    zhParts:["从什么","起","逃脱","想要","呢","啊"],
-    zhSentence:"我到底是想逃离什么呢",
-    grammar:
-      "何から：从什么（事物/现实）开始、从何处。\n" +
-      "逃れたい：逃れる（逃避、摆脱）＋たい，表示想要逃开。\n" +
-      "〜んだ：带解释/感叹色彩的语气，“究竟是想逃避什么呢”。"
-  },
-  {
-    id:"L14", start: 67.00, end: 74.00,
-    jpParts:["現実","って","やつ","か"],
-    romajiParts:["genjitsu","tte","yatsu","ka"],
-    zhParts:["现实","叫做","那家伙","吗"],
-    zhSentence:"是那个所谓的“现实”吗",
-    grammar:
-      "現実って：現実というのは 的口语说法，用「って」代替「というのは」，带点吐槽感。\n" +
-      "やつ：家伙、东西，略粗俗，带点不满或自嘲。“那个叫现实的玩意儿吗？”"
-  },
+    function initJaVoice() {
+      if (!('speechSynthesis' in window)) return;
+      const voices = speechSynthesis.getVoices();
+      jaVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ja')) || null;
+    }
 
-  {
-    id:"L15", start: 74.00, end: 76.00,
-    jpParts:["叶え","る","為","に","生き","て","る","ん","だ","って","叫び","たく","なる","よ","聞こえ","て","います","か"],
-    romajiParts:["kanae","ru","tame","ni","iki","te","ru","n","da","tte","sakebi","taku","naru","yo","kikoe","te","imasu","ka"],
-    zhParts:["实现","接续","为了","而","活","接续","着","（解释）","的","说","喊","想要","会变得","啊","听见","接续","着","吗"],
-    zhSentence:"想大声喊出“我就是为了实现愿望而活着的” 你听得见吗",
-    grammar:
-      "叶える為に：為に＝为了…；叶える＝让愿望实现。\n" +
-      "生きてるんだって：生きているんだ＋って（引用），字面“我是为了实现它而活着的啊（我可是这么认为的）”。\n" +
-      "叫びたくなる：叫ぶ＋たくなる，“忍不住想喊出来”。\n" +
-      "聞こえていますか：敬体疑问，“听得到吗？”，可以理解为对某人/世界的呼喊。"
-  },
-  {
-    id:"L16", start: 76.00, end: 79.00,
-    jpParts:["無難","に","なん","て","やっ","て","られ","ない","から"],
-    romajiParts:["bunan","ni","nan","te","yat","te","rare","nai","kara"],
-    zhParts:["无懈可击地","地","什么","之类","做","接续","得了","不能","因为"],
-    zhSentence:"因为已经没法再走那种安全保守的路了",
-    grammar:
-      "無難に：不出错地、求稳地。\n" +
-      "〜なんて：带一点轻视语气，“那种…什么的”。\n" +
-      "やってられない：受不了那样做、没法那样过下去。\n" +
-      "〜から：因为…。"
-  },
-  {
-    id:"L17", start: 79.00, end: 80.00,
-    jpParts:["帰る","場所","も","ない","の"],
-    romajiParts:["kaeru","basho","mo","nai","no"],
-    zhParts:["回去","地方","也","没有","的"],
-    zhSentence:"也已经没有可以回去的地方",
-    grammar:
-      "帰る場所：可以回去的地方（家、故乡、过去的自己等象征性的“归宿”）。\n" +
-      "〜もない：连…都没有，强调“无处可归”的孤独感。"
-  },
-  {
-    id:"L18", start: 80.00, end: 83.00,
-    jpParts:["優し","さ","に","は","いつも","感謝","して","る","だから","強く","なり","たい"],
-    romajiParts:["yasashi","sa","ni","wa","itsumo","kansha","shite","ru","dakara","tsuyoku","nari","tai"],
-    zhParts:["温柔","这种","对","在","一直","感谢","着","着","所以","坚强地","变","想要"],
-    zhSentence:"一直对周围的温柔心存感激 正因为这样才想变得更坚强",
-    grammar:
-      "優しさ：别人的温柔、善意。\n" +
-      "いつも感謝してる：一直很感激。\n" +
-      "だから：因此、所以。\n" +
-      "強くなりたい：想变得坚强。这里是“因为被温柔包围，所以更想靠自己站稳”。"
-  },
-  {
-    id:"L19", start: 83.00, end: 86.00,
-    jpParts:["懐かしく","なる","こんな","痛み","も","歓迎","じゃ","ん"],
-    romajiParts:["natsukashiku","naru","konna","itami","mo","kangei","ja","n"],
-    zhParts:["令人怀念地","变成","这样的","痛苦","也","欢迎","是","呢"],
-    zhSentence:"连这种会让人怀念的痛苦 也当成值得欢迎的东西",
-    grammar:
-      "懐かしくなる：变得令人怀念，将来回头看也会觉得“啊，那时候…”。\n" +
-      "こんな痛みも：连这样的痛苦也…，「〜も」有“连…都”的强调。\n" +
-      "歓迎じゃん：口语“不是也挺值得欢迎的吗”，一种自我打气，把痛苦当作成长的证明。"
-  }
-];
+    if ('speechSynthesis' in window) {
+      initJaVoice();
+      window.speechSynthesis.onvoiceschanged = initJaVoice;
+    }
 
+    function speakJa(text) {
+      if (!('speechSynthesis' in window)) {
+        console.warn('当前浏览器不支持语音合成 speechSynthesis');
+        return;
+      }
+      if (!text) return;
 
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = (jaVoice && jaVoice.lang) || 'ja-JP';
+      if (jaVoice) u.voice = jaVoice;
+      u.rate = 1.0;
+      u.pitch = 1.0;
+
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }
   </script>
 
   <!-- 逻辑（HTML5 video 版本） -->
-  <script>
-  const video = document.getElementById('player');
-  let curIndex = -1, showCn = true, offset = 0;
-  let grammarVisible = false;
+  <script type="module">
+    import { SEGMENTS } from "./segments.js";
+    window.SEGMENTS = SEGMENTS;
+    const video = document.getElementById('player');
+    let curIndex = -1, showCn = true;
+    let grammarVisible = false;
+    let showRomaji = true;
 
-
-  // UI
-  const $ = id => document.getElementById(id);
-  function syncOffset(){ $('offsetLabel').textContent = offset.toFixed(2)+'s'; }
-  function fmtTime(s){ const m=Math.floor(s/60), sec=(s%60).toFixed(2).padStart(5,'0'); return `${m}:${sec}`; }
-
-  function makeWordLine(parts, clsPrefix) {
-  if (!parts) return '';
-  return parts
-    .map((w, i) =>
-      `<span class="word ${clsPrefix}-word" data-word="${i}">${w}</span>`
-    )
-    .join(' ');
-}
-function renderGrammar(cur) {
-  const box = $('grammar');
-  if (!box) return;
-  if (!cur || !cur.grammar) {
-    box.innerHTML = '';
-    return;
-  }
-  // 支持换行
-  box.innerHTML = cur.grammar.replace(/\n/g, '<br>');
-}
-function renderCurrent(){
-  const cur = SEGMENTS[curIndex];
-  if (!cur) {
-    $('current').textContent = '--';
-    $('romaji').textContent = '';
-    $('cn').textContent = '';
-    renderGrammar(null);
-    updateSelectedWordDisplay();
-    return;
-  }
-
-  // 逐词渲染日文、罗马音、中文
-  $('current').innerHTML = makeWordLine(cur.jpParts, 'jp');
-  $('romaji').innerHTML = makeWordLine(cur.romajiParts, 'romaji');
-  $('cn').innerHTML = showCn
-    ? makeWordLine(cur.zhParts, 'zh')
-    : '';
-
-  renderGrammar(cur);
-  updateSelectedWordDisplay();
-}
-
-let activeWordIndex = null;
-
-function clearWordHighlight() {
-  document
-    .querySelectorAll('.word-active')
-    .forEach(el => el.classList.remove('word-active'));
-  activeWordIndex = null;
-}
-
-function highlightWord(idx) {
-  clearWordHighlight();
-  if (idx == null) return;
-  activeWordIndex = idx;
-
-  document
-    .querySelectorAll(`.word[data-word="${idx}"]`)
-    .forEach(el => el.classList.add('word-active'));
-}
-
-['current','romaji','cn'].forEach(id => {
-  const box = $(id);
-
-  box.addEventListener('mouseover', e => {
-    const span = e.target.closest('.word');
-    if (!span) return;
-    const idx = span.dataset.word;
-    highlightWord(idx);
-  });
-
-  box.addEventListener('mouseleave', () => {
-    if (activeWordIndex == null) clearWordHighlight();
-  });
-
-  box.addEventListener('click', e => {
-    const span = e.target.closest('.word');
-    if (!span) return;
-    const idx = span.dataset.word;
-    if (activeWordIndex === idx) {
-      clearWordHighlight();
-    } else {
-      highlightWord(idx);
+    const $ = id => document.getElementById(id);
+    function fmtTime(s){
+      const m = Math.floor(s/60);
+      const sec = (s%60).toFixed(2).padStart(5,'0');
+      return `${m}:${sec}`;
     }
-  });
-});
 
-  function highlight(i){
-    document.querySelectorAll('.seg').forEach(el=>el.classList.remove('active'));
-    if(i>=0){ const el = document.querySelector(`.seg[data-index="${i}"]`); if(el){ el.classList.add('active'); el.scrollIntoView({block:'nearest'}); } }
-  }
-  function buildList(){
-  const wrap = $('list'); 
-  wrap.innerHTML = '';
+    function makeWordLine(parts, clsPrefix) {
+      if (!parts) return '';
+      return parts
+        .map((w, i) =>
+          `<span class="word ${clsPrefix}-word" data-word="${i}">${w}</span>`
+        )
+        .join(' ');
+    }
 
-  SEGMENTS.forEach((s,i)=>{
-    const d = document.createElement('div');
-    d.className = 'seg';
-    d.dataset.index = i;
+    function renderGrammar(cur) {
+      const box = $('grammar');
+      if (!box) return;
+      if (!cur || !cur.grammar) {
+        box.innerHTML = '';
+        return;
+      }
+      box.innerHTML = cur.grammar.replace(/\n/g, '<br>');
+    }
 
-    const jpLine  = s.jpParts.join('');      // 或者 '｜' 看你喜好
-    const romLine = s.romajiParts.join(' ');
-    const zhLine  = s.zhSentence || s.zhParts.join('');
+    function renderCurrent(){
+      const cur = SEGMENTS[curIndex];
+      if (!cur) {
+        $('current').textContent = '--';
+        $('romaji').textContent = '';
+        $('cn').textContent = '';
+        renderGrammar(null);
+        return;
+      }
 
-    d.innerHTML = `
-      <div><strong>${jpLine}</strong></div>
-      <div>${romLine}</div>
-      <div class="small">${zhLine} · ${fmtTime(s.start)} – ${fmtTime(s.end)}</div>
-    `;
+      $('current').innerHTML = makeWordLine(cur.jpParts, 'jp');
+      $('romaji').innerHTML = showRomaji
+        ? makeWordLine(cur.romajiParts, 'romaji')
+        : '';
+      $('cn').innerHTML = showCn
+        ? makeWordLine(cur.zhParts, 'zh')
+        : '';
 
-    d.onclick = () => jumpTo(i);
-    wrap.appendChild(d);
-  });
-}
+      renderGrammar(cur);
+    }
 
-  function jumpTo(i){
-    const s = SEGMENTS[i]; if(!s) return;
-    video.currentTime = Math.max(0, s.start - offset);
-    video.play();
-  }
+    let activeWordIndex = null;
 
-  // 时间驱动：HTML5 video 的 timeupdate 事件
-  video.addEventListener('timeupdate', ()=>{
-    const t = video.currentTime + offset;
-    const i = SEGMENTS.findIndex(s => t>=s.start && t<s.end);
-    if(i !== curIndex){ curIndex = i; renderCurrent(); highlight(i); }
-  });
+    function clearWordHighlight() {
+      document
+        .querySelectorAll('.word-active')
+        .forEach(el => el.classList.remove('word-active'));
+      activeWordIndex = null;
+    }
 
-  // 句式解释展开/收起
-const grammarBox = $('grammar');
-const toggleGrammarBtn = $('toggleGrammar');
+    function highlightWord(idx) {
+      clearWordHighlight();
+      if (idx == null) return;
+      activeWordIndex = idx;
+      document
+        .querySelectorAll(`.word[data-word="${idx}"]`)
+        .forEach(el => el.classList.add('word-active'));
+    }
 
-if (toggleGrammarBtn && grammarBox) {
-  toggleGrammarBtn.onclick = () => {
-    grammarVisible = !grammarVisible;
-    grammarBox.style.display = grammarVisible ? 'block' : 'none';
-    toggleGrammarBtn.textContent = grammarVisible ? '收起句式解释' : '展开句式解释';
-  };
-}
+    ['current','romaji','cn'].forEach(id => {
+      const box = $(id);
 
+      box.addEventListener('mouseover', e => {
+        const span = e.target.closest('.word');
+        if (!span) return;
+        const idx = span.dataset.word;
+        highlightWord(idx);
+      });
 
-  // 按钮与快捷键
-  $('play').onclick = ()=> video.paused ? video.play() : video.pause();
-  $('prev').onclick = ()=> jumpTo(Math.max(0, (curIndex>0 ? curIndex-1 : 0)));
-  $('next').onclick = ()=> jumpTo(Math.min(SEGMENTS.length-1, (curIndex>=0 ? curIndex+1 : 0)));
-  $('toggleCn').onclick = ()=> { showCn=!showCn; renderCurrent(); };
-  $('minus').onclick = ()=> { offset -= 0.10; syncOffset(); };
-  $('plus').onclick = ()=> { offset += 0.10; syncOffset(); };
-  $('go').onclick = ()=> {
-    const v = $('jump').value.trim(); if(!v) return;
-    let sec = 0;
-    if(/^\d+:\d+(\.\d+)?$/.test(v)){ const [m,s]=v.split(':'); sec = (+m)*60 + (+s); }
-    else sec = parseFloat(v);
-    if(!isNaN(sec)){ video.currentTime = Math.max(0, sec - offset); video.play(); }
-  };
-  document.addEventListener('keydown', e=>{
-    if(e.target.tagName==='INPUT') return;
-    if(e.code==='Space'){ e.preventDefault(); $('play').click(); }
-    if(e.key==='+'){ $('plus').click(); }
-    if(e.key==='-'){ $('minus').click(); }
-    if(e.key==='ArrowUp'){ $('prev').click(); }
-    if(e.key==='ArrowDown'){ $('next').click(); }
-    if(e.key.toLowerCase()==='t'){ $('toggleCn').click(); }
-  });
-  
+      box.addEventListener('mouseleave', () => {
+        if (activeWordIndex == null) clearWordHighlight();
+      });
 
-  // 初始化
-  buildList(); syncOffset(); renderCurrent();
+      box.addEventListener('click', e => {
+        const span = e.target.closest('.word');
+        if (!span) return;
+        const idx = span.dataset.word;
+        const idxNum = Number(idx);
+
+        if (activeWordIndex === idx) {
+          clearWordHighlight();
+        } else {
+          highlightWord(idx);
+        }
+
+        const cur = SEGMENTS[curIndex];
+        if (cur && cur.jpParts && cur.jpParts[idxNum]) {
+          speakJa(cur.jpParts[idxNum]);
+        }
+      });
+    });
+
+    function highlight(i){
+      document.querySelectorAll('.seg').forEach(el=>el.classList.remove('active'));
+      if(i>=0){
+        const el = document.querySelector(`.seg[data-index="${i}"]`);
+        if(el){
+          el.classList.add('active');
+          el.scrollIntoView({block:'nearest'});
+        }
+      }
+    }
+
+    function buildList() {
+      const wrap = $('list');
+      wrap.innerHTML = '';
+
+      SEGMENTS.forEach((s, i) => {
+        const d = document.createElement('div');
+        d.className = 'seg';
+        d.dataset.index = i;
+
+        const jpLine  = s.jpParts.join('');
+        const romLine = s.romajiParts.join(' ');
+        const zhLine  = s.zhSentence || s.zhParts.join('');
+
+        const jpDiv = document.createElement('div');
+        jpDiv.innerHTML = `<strong>${jpLine}</strong>`;
+        d.appendChild(jpDiv);
+
+        if (showRomaji) {
+          const romDiv = document.createElement('div');
+          romDiv.className = 'small list-romaji';
+          romDiv.textContent = romLine;
+          d.appendChild(romDiv);
+        }
+
+        const zhDiv = document.createElement('div');
+        zhDiv.className = 'small';
+        zhDiv.textContent = `${zhLine} · ${fmtTime(s.start)} – ${fmtTime(s.end)}`;
+        d.appendChild(zhDiv);
+
+        d.onclick = () => jumpTo(i);
+        wrap.appendChild(d);
+      });
+    }
+
+    function jumpTo(i){
+      const s = SEGMENTS[i];
+      if (!s) return;
+
+      video.pause();
+      video.currentTime = s.start;
+
+      setTimeout(() => video.play(), 50);
+    }
+
+    // 时间驱动：HTML5 video 的 timeupdate 事件
+    video.addEventListener('timeupdate', ()=>{
+      const t = video.currentTime;
+      const i = SEGMENTS.findIndex(s => t>=s.start && t<s.end);
+      if(i !== curIndex){
+        curIndex = i;
+        renderCurrent();
+        highlight(i);
+      }
+    });
+
+    const grammarBox = $('grammar');
+    const toggleGrammarBtn = $('toggleGrammar');
+
+    if (toggleGrammarBtn && grammarBox) {
+      toggleGrammarBtn.onclick = () => {
+        grammarVisible = !grammarVisible;
+        grammarBox.style.display = grammarVisible ? 'block' : 'none';
+        toggleGrammarBtn.textContent = grammarVisible ? '收起句式解释' : '展开句式解释';
+      };
+    }
+
+    $('play').onclick = ()=> video.paused ? video.play() : video.pause();
+    $('prev').onclick = ()=> jumpTo(Math.max(0, (curIndex>0 ? curIndex-1 : 0)));
+    $('next').onclick = ()=> jumpTo(Math.min(SEGMENTS.length-1, (curIndex>=0 ? curIndex+1 : 0)));
+    $('toggleCn').onclick = ()=> { showCn=!showCn; renderCurrent(); };
+
+    $('go').onclick = ()=> {
+      const v = $('jump').value.trim();
+      if(!v) return;
+
+      let sec = 0;
+
+      if(/^\d+:\d+(\.\d+)?$/.test(v)){
+        const [m, s] = v.split(':');
+        sec = (+m)*60 + (+s);
+      } else {
+        sec = parseFloat(v);
+      }
+
+      if(!isNaN(sec)){
+        video.pause();
+        video.currentTime = sec;
+        setTimeout(() => video.play(), 50);
+      }
+    };
+
+    $('toggleRomaji').onclick = () => {
+      showRomaji = !showRomaji;
+      $('toggleRomaji').textContent = showRomaji ? '隐藏罗马音' : '显示罗马音';
+      renderCurrent();
+      buildList();
+    };
+
+    document.addEventListener('keydown', e=>{
+      if(e.target.tagName==='INPUT') return;
+      if(e.code==='Space'){
+        e.preventDefault();
+        $('play').click();
+      }
+      if(e.key==='ArrowUp'){ $('prev').click(); }
+      if(e.key==='ArrowDown'){ $('next').click(); }
+      if(e.key.toLowerCase()==='t'){ $('toggleCn').click(); }
+    });
+
+    // 初始化
+    buildList();
+    renderCurrent();
   </script>
 </body>
 </html>
