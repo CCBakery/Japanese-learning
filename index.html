@@ -93,6 +93,12 @@
     padding-right:4px;
   }
   .seg > div { display: block; }
+  .mode-active {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 60%, transparent);
+  background: rgba(96,165,250,0.12);
+}
+
 </style>
 </head>
 <body>
@@ -128,6 +134,7 @@
       <div class="row" style="margin-top:8px">
         <button id="toggleGrammar" class="chip">展开句式解释</button>
         <button id="toggleRomaji" class="chip">隐藏罗马音</button>
+        <button id="startCardMode">词卡模式</button>
       </div>
       <div id="grammar" class="small" style="margin-top:4px; display:none"></div>
       <hr style="border:0;border-top:1px solid #232833;margin:10px 0">
@@ -178,6 +185,7 @@
     let curIndex = -1;
     let grammarVisible = false;
     let showRomaji = true;
+    let quizMode = "order";
 
     const $ = id => document.getElementById(id);
     function fmtTime(s){
@@ -330,6 +338,109 @@
       setTimeout(() => video.play(), 50);
     }
 
+    function buildCardPool() {
+        const pool = [];
+        for (const seg of SEGMENTS) {
+            if (seg.keyWords) {
+                for (const kw of seg.keyWords) pool.push(kw);
+            }
+        }
+        return pool;
+    }
+    const cardPool = buildCardPool();
+    // ========== 词卡模式：选择题引擎 ==========
+
+    // Fisher-Yates 洗牌
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function makeQuestion(word, pool) {
+      const correct = word.surface;
+
+      // 干扰项（随机抽两个不同的）
+      const distractors = shuffle(
+        pool.filter(w => w.surface !== correct)
+      ).slice(0, 2);
+
+      const options = shuffle([
+        correct,
+        distractors[0].surface,
+        distractors[1].surface
+      ]);
+
+      return { zh: word.zh, surface: correct, options };
+    }
+
+    function startQuiz(pool) {
+      const cardUI = document.getElementById("cardMode");
+      const qProgress = document.getElementById("quizProgress");
+      const qQuestion = document.getElementById("quizQuestion");
+      const qOptions = document.getElementById("quizOptions");
+      const qNext = document.getElementById("quizNext");
+      const qFeedback = document.getElementById("quizFeedback");
+
+      cardUI.style.display = "block";
+      let index = 0;
+
+      const questions =
+        (quizMode === "random") 
+        ? shuffle(pool)
+        : pool;  // 顺序模式
+
+      function render() {
+        const word = questions[index];
+        const q = makeQuestion(word, pool);
+
+        qProgress.textContent = `${index + 1} / ${questions.length}`;
+        qQuestion.textContent = `“${q.zh}” 对应的日语词是？`;
+        qFeedback.textContent = ""; // 清除上一题的提示
+
+        qOptions.innerHTML = "";
+        q.options.forEach(op => {
+          const btn = document.createElement("button");
+          btn.className = "chip";
+          btn.textContent = op;
+
+          btn.onclick = () => {
+            speakJa(op); // 朗读选项
+
+            if (op === q.surface) {
+              btn.style.borderColor = "lime";
+              qFeedback.style.color = "lime";
+              qFeedback.textContent = "✔ 正确！";
+            } else {
+              btn.style.borderColor = "crimson";
+              qFeedback.style.color = "crimson";
+              qFeedback.textContent = "✘ 不对，再试试~";
+            }
+          };
+
+          qOptions.appendChild(btn);
+        });
+
+        qNext.onclick = () => {
+          index++;
+          if (index >= questions.length) {
+            qQuestion.textContent = "🎉 全部完成！";
+            qOptions.innerHTML = "";
+            qFeedback.textContent = "";
+            qNext.style.display = "none";
+            return;
+          }
+          render();
+        };
+      }
+
+      qNext.style.display = "inline-block";
+      render();
+      } 
+
     // 时间驱动：HTML5 video 的 timeupdate 事件
     video.addEventListener('timeupdate', ()=>{
       const t = video.currentTime;
@@ -374,9 +485,68 @@
       if(e.key==='ArrowDown'){ $('next').click(); }
     });
 
+    document.getElementById("startCardMode").onclick = () => {
+      const pool = buildCardPool();   // 你刚写的函数
+      startQuiz(pool);                // 下一步我会帮你实现
+    };
+    // 退出词卡模式按钮
+    
+    const btnOrder = document.getElementById("cardModeOrder");
+    const btnRandom = document.getElementById("cardModeRandom");
+
+    function updateModeButtons() {
+      if (quizMode === "order") {
+        btnOrder.classList.add("mode-active");
+        btnRandom.classList.remove("mode-active");
+      } else {
+        btnRandom.classList.add("mode-active");
+        btnOrder.classList.remove("mode-active");
+      }
+    }
+
+    btnOrder.onclick = () => {
+      quizMode = "order";
+      updateModeButtons();
+    };
+
+    btnRandom.onclick = () => {
+      quizMode = "random";
+      updateModeButtons();
+    };
+
+    // 初始化默认状态（默认顺序模式）
+    updateModeButtons();
+
+
+    document.getElementById("quizClose").onclick = () => {
+      document.getElementById("cardMode").style.display = "none";
+    };
+
+
     // 初始化
     buildList();
     renderCurrent();
   </script>
+  <div id="cardMode" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(15,17,21,0.96);
+  color: var(--text);
+  display: none;
+  padding: 24px;
+  overflow-y: auto;
+  z-index: 9999;
+">
+  <div style="display:flex; gap:10px; margin-bottom:16px">
+    <button id="cardModeOrder" class="chip">顺序模式</button>
+    <button id="cardModeRandom" class="chip">随机模式</button>
+  </div>
+  <div id="quizProgress" style="margin-bottom:12px;font-size:14px;color:var(--muted)"></div>
+  <div id="quizQuestion" style="font-size:20px;font-weight:600;margin:16px 0"></div>
+  <div id="quizFeedback" style="margin:10px 0;font-size:16px;"></div>
+  <div id="quizOptions" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
+  <button id="quizNext" class="chip" style="margin-top:10px">下一题</button>
+  <button id="quizClose" class="chip" style="margin-top:10px;background:#333">退出词卡模式</button>
+</div>
 </body>
 </html>
