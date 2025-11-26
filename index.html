@@ -377,7 +377,7 @@
       return { zh: word.zh, surface: correct, options };
     }
 
-    function startQuiz(pool) {
+    function startQuiz(pool, restartMode = null) {
       const cardUI = document.getElementById("cardMode");
       const qProgress = document.getElementById("quizProgress");
       const qQuestion = document.getElementById("quizQuestion");
@@ -388,10 +388,25 @@
       cardUI.style.display = "block";
       let index = 0;
 
-      const questions =
-        (quizMode === "random") 
-        ? shuffle(pool)
-        : pool;  // 顺序模式
+      let questions;
+
+        if (restartMode === "force-restart-random") {
+          // ★ 切换随机 → 强制洗牌
+          questions = shuffle(pool);
+
+        } else if (restartMode === "force-restart-order") {
+          // ★ 切换顺序 → 使用原始顺序
+          questions = pool;
+
+        } else {
+          // ★ 正常流程（下一题时）
+          questions = (quizMode === "random") ? shuffle(pool) : pool;
+        }
+
+        // 当前 quiz index 归零
+        window.currentQuizIndex = 0;
+        window.currentQuizList = questions;
+
 
       function render() {
         const word = questions[index];
@@ -505,14 +520,25 @@
     }
 
     btnOrder.onclick = () => {
-      quizMode = "order";
-      updateModeButtons();
-    };
+        quizMode = "order";
+        updateModeButtons();
 
-    btnRandom.onclick = () => {
-      quizMode = "random";
-      updateModeButtons();
-    };
+        // ★ 切换到顺序模式 → 立即换到当前 index 的顺序词卡
+        if (window.currentQuizIndex != null && window.currentQuizList) {
+          const pool = buildCardPool();
+          startQuiz(pool, "force-restart-order");
+        }
+      };
+
+      btnRandom.onclick = () => {
+        quizMode = "random";
+        updateModeButtons();
+
+        // ★ 切换到随机模式 → 立即重新 shuffle 并换题
+        const pool = buildCardPool();
+        startQuiz(pool, "force-restart-random");
+      };
+
 
     // 初始化默认状态（默认顺序模式）
     updateModeButtons();
